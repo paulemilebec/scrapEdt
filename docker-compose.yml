@@ -1,0 +1,27 @@
+services:
+  # client
+  web-server: 
+    build: 
+      context: ./client
+    container_name: scrapedt-client
+    ports:
+      # Mappe le port 80 du conteneur (Apache) au port 80 de votre machine hôte
+      - "8081:80" 
+    volumes:
+      - ./server/ics:/usr/local/apache2/htdocs/api_data/
+    restart: unless-stopped # redémarre toujours le service
+
+
+  # serveur
+  script-runner:
+    build: 
+      context: ./server
+    container_name: scrapedt-server
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    volumes:
+      - ./server/ics:/app/partage # pr le ics
+      - ./server:/app/ # pr le code
+    restart: unless-stopped

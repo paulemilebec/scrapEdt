@@ -1,0 +1,5 @@
+schedule
+beautifulsoup4
+requests
+icalendar
+dotenv
