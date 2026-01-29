@@ -10,6 +10,8 @@ services:
     volumes:
       - ./server/ics:/usr/local/apache2/htdocs/api_data/
     restart: unless-stopped # redémarre toujours le service
+    networks:
+      - npm-network
 
 
   # serveur
@@ -25,3 +27,9 @@ services:
       - ./server/ics:/app/partage # pr le ics
       - ./server:/app/ # pr le code
     restart: unless-stopped
+    networks:
+      - npm-network
+
+networks:
+  npm-network:
+    external: true
