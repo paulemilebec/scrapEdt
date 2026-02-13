@@ -1,3 +1,4 @@
+import hashlib
 from icalendar import Calendar, Event, vCalAddress
 from datetime import datetime
 import json
@@ -40,8 +41,12 @@ def processClass(seance, UIDS_DEJA_VUS, cal_global):
     titleVal = seance.get('title') or ''
     codeVal = seance.get('code')
     
-    # Création de l'UID
-    uid = str(codeVal if codeVal is not None else hash(startVal + titleVal))
+    if codeVal is not None:
+        uid = str(codeVal)
+    else:
+        seed = f"{startVal}{titleVal}"
+        uid = hashlib.md5(seed.encode('utf-8')).hexdigest()
+    
     fullUid = f"{uid}@ent.cesi.fr"
 
     # Vérification doublons

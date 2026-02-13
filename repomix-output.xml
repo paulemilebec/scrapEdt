@@ -1,0 +1,762 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+client/Dockerfile
+client/index.html
+client/style.css
+docker-compose.yml
+README.md
+server/.dockerignore
+server/convertissor.py
+server/Dockerfile
+server/main.py
+server/README.md
+server/requirements.txt
+server/scrap.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".gitignore">
+# Python
+__pycache__/
+server/__pycache__
+*.pyc
+venv/
+.env
+
+# Données
+#server/ics/*.ics
+#server/jsonAPI/*.json
+</file>
+
+<file path="client/Dockerfile">
+FROM httpd:alpine
+COPY . /usr/local/apache2/htdocs/
+EXPOSE 80
+</file>
+
+<file path="client/index.html">
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Calendrier</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="url-container">
+        <input type="text" id="calendarUrl" readonly value="https://scrapedt.paulemilebecquart.ovh/api_data/emploisDuTemps.ics">
+        <button onclick="copyToClipboard()">Copier</button>
+    </div>
+    
+    <a href="https://github.com/paulemilebec/scrapEdt" target="_blank" class="github-link">
+        <svg height="32" width="32" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+    </a>
+
+    <script>
+        function copyToClipboard() {
+            const copyText = document.getElementById("calendarUrl");
+            navigator.clipboard.writeText(copyText.value).then(() => {
+                /*alert("Copié !");*/
+            });
+        }
+    </script>
+</body>
+</html>
+</file>
+
+<file path="client/style.css">
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.url-container {
+  display: flex;
+  gap: 12px;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+#calendarUrl {
+  padding: 15px 20px;
+  font-size: 24px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  min-width: 500px;
+}
+
+button {
+  padding: 15px 30px;
+  font-size: 18px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+.github-link {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  color: white;
+  opacity: 0.8;
+  transition: opacity 0.3s, transform 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  backdrop-filter: blur(10px);
+}
+
+.github-link:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .url-container {
+    flex-direction: column;
+    margin: 20px;
+  }
+  
+  #calendarUrl {
+    min-width: auto;
+  }
+}
+</file>
+
+<file path="README.md">
+Todo :
+    Gestion des logs
+    Garder les anciens cours
+    Mettre des couleurs avec X-APPLE-CALENDAR-COLOR ou X-GOOGLE-CALENDAR-COLOR
+    Mettre les addresses mails des profs
+</file>
+
+<file path="server/.dockerignore">
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
+#ics/
+#jsonAPI/
+
+.dockerignore
+#Dockerfile
+*.log
+</file>
+
+<file path="server/convertissor.py">
+from icalendar import Calendar, Event, vCalAddress
+from datetime import datetime
+import json
+import os
+
+
+def convert(fileName, cal_global, UIDS_DEJA_VUS, pathJson):
+    completPathJson = os.path.join(pathJson, fileName)
+    
+    try:
+        with open(completPathJson, "r", encoding="utf-8") as f:
+            dataJson = json.load(f)
+    except Exception as e:
+        print(f"❌ Erreur de lecture du fichier JSON {fileName}: {e}")
+        return 0
+
+    evenementsAjoutes = 0
+    
+    # Vérification que le JSON est bien une liste de séances
+    if isinstance(dataJson, list):
+        for seance in dataJson:
+            try:
+                # On n'incrémente le compteur que si processClass réussit
+                if processClass(seance, UIDS_DEJA_VUS, cal_global):
+                    evenementsAjoutes += 1
+            except Exception as e:
+                # Si une séance pose problème, on l'affiche mais on continue la boucle
+                print(f"⚠️ Erreur sur une séance dans {fileName}: {e}")
+                continue
+    else:
+        print(f"⚠️ Le fichier {fileName} ne contient pas une liste de séances valide (Type: {type(dataJson)}).")
+        
+    return evenementsAjoutes
+
+def processClass(seance, UIDS_DEJA_VUS, cal_global):
+    if not isinstance(seance, dict):
+        return False
+
+    startVal = seance.get('start') or ''
+    titleVal = seance.get('title') or ''
+    codeVal = seance.get('code')
+    
+    # Création de l'UID
+    uid = str(codeVal if codeVal is not None else hash(startVal + titleVal))
+    fullUid = f"{uid}@ent.cesi.fr"
+
+    # Vérification doublons
+    if fullUid in UIDS_DEJA_VUS:
+        return False
+    
+    UIDS_DEJA_VUS.add(fullUid)
+
+    # --- Construction des champs ---
+    summary = titleVal or 'Cours sans titre'
+    if titleVal == "A planifier":
+        summary = "Autonomie"
+
+    categoriesList = []
+    if summary == "Autonomie": categoriesList.append("Autonomie")
+    elif summary == "Anglais": categoriesList.append("Anglais")
+    elif "Prosit" in summary: categoriesList.append("Prosit")
+    elif "Workshop" in summary: categoriesList.append("Workshop")
+    
+    # Salles (Sécurisé contre le None)
+    salles_raw = seance.get('salles') or []
+    salles_list = []
+    if isinstance(salles_raw, list):
+        for s in salles_raw:
+            if isinstance(s, dict) and s.get('nomSalle'):
+                salles_list.append(s.get('nomSalle'))
+    
+    salles = ", ".join(salles_list) if salles_list else ""
+    
+    description_lines = [
+        f"Matière: {seance.get('matiere') or seance.get('theme', 'N/A')}",
+        f"Lieu: {salles}",
+    ]
+    
+    # Intervenants
+    intervenants = seance.get('intervenants') or []
+    nomsProfs = []
+    if isinstance(intervenants, list):
+        for i in intervenants:
+            if isinstance(i, dict):
+                prenom = (i.get('prenom') or '').strip()
+                nom = (i.get('nom') or '').strip()
+                nom_complet = f"{prenom} {nom}".strip()
+                if nom_complet:
+                    nomsProfs.append(nom_complet)        
+    
+    if nomsProfs:
+        description_lines.append(f"Intervenant(s): {', '.join(nomsProfs)}")
+    
+    # Participants
+    participants = seance.get('participants') or []
+    groupes = []
+    if isinstance(participants, list):
+        for p in participants:
+            if isinstance(p, dict) and p.get('libelleGroupe'):
+                groupes.append(p.get('libelleGroupe'))
+    
+    if groupes:
+        description_lines.append(f"Groupe(s): {', '.join(groupes)}")
+
+    description = "\n".join(description_lines)
+
+    # Dates
+    try:
+        dtstart = datetime.fromisoformat(seance['start'])
+        dtend = datetime.fromisoformat(seance['end'])
+    except Exception:
+        # Si pas de date, l'événement est invalide
+        return False
+
+    # Suppression Jeudi après-midi (13:30 - 17:30)
+    HEURE_MIN = "13:30"
+    HEURE_MAX = "17:30"
+    if dtstart.weekday() == 3: # 3 = Jeudi
+        if dtstart.strftime("%H:%M") == HEURE_MIN and dtend.strftime("%H:%M") == HEURE_MAX:
+            print(f"⚙️ Exclusion : {summary} le Jeudi (13h30-17h30).")
+            return False
+
+    # Création de l'événement iCal
+    event = Event()
+    event.add('categories', categoriesList)
+    event.add('summary', summary)
+    event.add('dtstart', dtstart)
+    event.add('dtend', dtend)
+    event.add('location', salles)
+    event.add('description', description)
+    event.add('uid', fullUid)
+    
+    # Organisateur
+    if isinstance(intervenants, list):
+        for i in intervenants:
+            if isinstance(i, dict) and i.get('adresseMail'):
+                organizer = vCalAddress(f'MAILTO:{i.get("adresseMail")}')
+                cn = f"{i.get('prenom','') or ''} {i.get('nom','') or ''}".strip()
+                if cn: organizer.params['cn'] = cn
+                event['organizer'] = organizer
+                break
+                
+    cal_global.add_component(event)
+    return True
+
+
+
+def mainCon(pathIcs, pathJson):
+    # Initialisation du Calendrier Global pour la Fusion
+    cal_final = Calendar()
+    cal_final.add('prodid', '-//Emploi du temps CESI//fr')
+    cal_final.add('version', '2.0')
+    cal_final.add('X-WR-CALNAME', 'Emploi du temps CESI')
+    
+    # Structure de données pour la déduplication
+    uids_vus = set()
+    totalEvenementsAjoutes = 0
+    fichiersTraites = 0
+
+    print("\n\n-------------- Démarrage de la fusion --------------")
+    
+    try:
+        # Parcourt tous les fichiers JSON dans le répertoire source
+        if not os.path.exists(pathJson):
+            print(f"\n❌ Erreur : Le répertoire source {pathJson} est introuvable. Veuillez vérifier le chemin.")
+            return
+
+
+        for file in os.listdir(pathJson):
+            if file.endswith(".json"):
+                fichiersTraites += 1
+                print(f"⚙️ Traitement du fichier : {file}...")
+                
+                # Appelle la fonction convert() pour ajouter les événements uniques au cal_final
+                evenementsAjoutes = convert(file, cal_final, uids_vus, pathJson)
+                if evenementsAjoutes is not None:
+                    totalEvenementsAjoutes += evenementsAjoutes
+        
+        # Écriture du fichier .ics final
+        
+        nomFichierFinal = "emploisDuTemps" + ".ics" #os.path.splitext(file)[0]
+        cheminFinalIcs = os.path.join(pathIcs, nomFichierFinal)
+        
+        # Écriture du contenu binaire du calendrier
+        with open(cheminFinalIcs, 'wb') as f:
+            f.write(cal_final.to_ical())
+            
+        print("-" * 40)
+        print(f"✅ Conversion et fusion réussies après traitement de {fichiersTraites} fichiers.")
+        print(f"Nombre total d'événements uniques enregistrés : {totalEvenementsAjoutes}")
+        print(f"Fichier final sauvegardé dans : {cheminFinalIcs}")
+        print("Vous pouvez importer ce fichier unique dans votre logiciel de calendrier.")
+
+    except FileNotFoundError:
+        print(f"\n❌ Erreur : Le répertoire source {pathJson} est introuvable. Veuillez vérifier le chemin.")
+    except Exception as e:
+        print(f"\n❌ Erreur inattendue lors de la fusion : {e}")
+</file>
+
+<file path="server/Dockerfile">
+FROM python:3.11-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN mkdir -p /app/partage /app/jsonAPI
+COPY . .
+CMD ["python", "main.py"]
+EXPOSE 80
+#HEALTHCHECK --interval=30s --timeout=5s CMD curl -f http://localhost/health || exit 1
+</file>
+
+<file path="server/main.py">
+from scrap import authenticationSSO, authenticationADFS, recupererDonnees, authenticationSAML
+from convertissor import mainCon
+from dotenv import load_dotenv
+import datetime
+import schedule
+import time
+import os
+
+
+def execution():
+    # Variables
+    load_dotenv()
+    email = os.getenv("EMAIL")
+    mdp = os.getenv("MDP")
+    nombreDeJours = 30 # taille du calendrier en j
+
+    #pathIcs = os.path.join("server", "ics")
+    #pathJson = os.path.join("server", "jsonAPI")
+    
+    pathIcs = "/app/partage" #os.path.join("app", "partage")
+    pathJson = "/app/jsonAPI" #os.path.join("app", "jsonAPI")
+
+    os.makedirs(pathIcs, exist_ok=True)
+    os.makedirs(pathJson, exist_ok=True)
+
+    #########################################################
+    #########################################################
+
+    print(f"Exécution du script à {datetime.datetime.now()}")
+
+    r2 = authenticationSSO(email)
+    r3 = authenticationADFS(r2, email, mdp)
+    authenticationSAML(r3)
+    recupererDonnees(nombreDeJours, pathJson)
+    mainCon(pathIcs, pathJson)
+
+    print("Script terminé.")
+
+
+if __name__ == "__main__":
+    schedule.every().day.at("00:00").do(execution)
+
+    execution()
+
+    while True:
+        schedule.run_pending()
+        time.sleep(60) # chaque minute
+</file>
+
+<file path="server/README.md">
+# Scrap edt
+
+-----
+
+## 1️⃣ Requête 1 : Initialisation (WAYF GET)
+
+Le but de cette requête est de déclencher le processus d'authentification et d'arriver sur la page de connexion de l'IdP (ADFS).
+
+| Caractéristique | Contenu | Rôle |
+| :--- | :--- | :--- |
+| **Type** | **GET** | On demande au serveur de nous envoyer la page d'accueil de la connexion. |
+| **URL Cible** | Le service **WAYF** (ex: `https://wayf.cesi.fr/login?...`). Votre email y est souvent inclus en paramètre (`UserName`). | Le serveur WAYF reçoit l'email et redirige le navigateur vers le bon Fournisseur d'Identité (ADFS). |
+| **Données** | Aucune (sauf les paramètres dans l'URL). | |
+| **Résultat** | La réponse contient le code HTML d'une page ADFS qui, dans votre cas, est souvent un **formulaire SAML initial** qui s'auto-soumet immédiatement. |
+
+### Note sur l'auto-soumission
+
+Dans votre code, la réponse `r1` contient un petit formulaire SAML qui doit être soumis immédiatement (Requête 2a) pour arriver à la vraie page de login ADFS (Requête 2b). Cette étape est une transition standard dans les fédérations.
+
+-----
+
+## 2️⃣ Requête 2 : Authentification (ADFS POST)
+
+Cette requête simule l'action d'entrer le mot de passe et de cliquer sur "Se connecter". C'est là que l'IdP (ADFS) vérifie votre identité.
+
+| Caractéristique | Contenu | Rôle |
+| :--- | :--- | :--- |
+| **Type** | **POST** | On envoie des données sensibles au serveur pour authentification. |
+| **URL Cible** | L'**`action`** du formulaire ADFS (ex: `https://sts.viacesi.fr/adfs/ls/...`). | C'est le point de terminaison qui traite les identifiants. |
+| **Données (`data`)** | **Crucial :** Un dictionnaire contenant :<br>\* `UserName` (votre email)<br>\* `Password` (votre mot de passe)<br>\* **Tous les champs cachés** (`AuthMethod`, `client-request-id`, etc.) extraits du formulaire ADFS. | Le serveur a besoin de tous ces jetons et identifiants pour valider la session et prévenir les attaques CSRF. |
+| **Résultat** | Si l'authentification réussit, la réponse `r3` contient le **Formulaire de Réponse SAML** caché (le jeton de sécurité). |
+
+-----
+
+## 3️⃣ Requête 3 : Fédération (SAML POST)
+
+Cette requête est la dernière étape de la chaîne de confiance. Elle transmet la preuve de votre identité (le jeton) au Service Provider (Moodle/ENT).
+
+| Caractéristique | Contenu | Rôle |
+| :--- | :--- | :--- |
+| **Type** | **POST** | On soumet le jeton de sécurité. |
+| **URL Cible** | L'**`action`** du formulaire SAML (ex: `https://wayf.cesi.fr/login?...` ou directement l'URL Moodle/ENT). | C'est le point de terminaison du Service Provider qui reçoit la preuve d'identité. |
+| **Données (`data`)** | Un dictionnaire contenant :<br>\* **`SAMLResponse`** : Le jeton d'identité encodé, prouvant que vous avez été authentifié par l'IdP.<br>\* **`RelayState`** (si présent) : Information de contexte. | Le SP utilise le `SAMLResponse` pour vérifier l'identité de l'utilisateur et lui créer une session de connexion. |
+| **Résultat** | La réponse **`r4`** est la page finale de la ressource demandée (ex: la page d'accueil de l'ENT), avec les **cookies de session** désormais actifs. |
+
+### Le rôle de la Session
+
+Il est fondamental que toutes ces requêtes soient faites en utilisant la **même instance de `requests.Session()`**. Cette session est responsable de la conservation et de l'échange automatique des **cookies** qui lient ces trois étapes ensemble, garantissant que le serveur reconnaisse que chaque requête fait partie du même flux d'authentification.
+</file>
+
+<file path="server/requirements.txt">
+schedule
+beautifulsoup4
+requests
+icalendar
+dotenv
+</file>
+
+<file path="server/scrap.py">
+from datetime import datetime, date, timedelta
+from dotenv import load_dotenv
+from urllib.parse import urljoin
+from bs4 import BeautifulSoup
+import requests
+import html
+import json
+import os
+
+global session
+
+
+def authenticationSSO(email):
+    global session
+    # autentification SSO via le protocole SAML
+    # WAYF
+    # SAML (formulaire automatique)
+
+    session = requests.Session()
+
+    print("\n-------------- Début du scraping --------------")
+
+    print("1. INITIALISATION (WAYF)")
+    
+    # 1️. Requête GET initiale vers le service WAYF avec l'email pour obtenir la redirection ADFS.
+    urlWayf = f"https://wayf.cesi.fr/login?client_name=ClientIdpViaCesiFr&needs_client_redirection=true&UserName={email}"
+    r1 = session.get(urlWayf)
+    if r1.status_code != 200:
+        print("❌ Échec de la connexion au WAYF.")
+        return None
+    
+    print(f"✅ Connexion au WAYF réussie -> Status: {r1.status_code}")
+
+    # --- Étape intermédiaire d'auto-soumission SAML ---
+    soup = BeautifulSoup(r1.text, "html.parser")
+    form = soup.find("form")
+    if form and form.get("action"):
+        actionUrl = html.unescape(form["action"])
+        relayState = html.unescape(form.find("input", {"name": "RelayState"})["value"])
+        samlRequest = html.unescape(form.find("input", {"name": "SAMLRequest"})["value"])
+        # POST de l'auto-soumission pour arriver à la vraie page de login ADFS.
+        # envoie le ticket SAML au serveur d'identité (ADFS).
+        r2 = session.post(actionUrl, data={"RelayState": relayState, "SAMLRequest": samlRequest})
+    else:
+        r2 = r1 # Si pas d'auto-submit, r2 est r1
+
+    print("✅ Formulaire auto-soumission SAML complété")
+    return r2
+
+
+def authenticationADFS(r2, email, mdp):
+    global session
+    print("\n2. AUTHENTIFICATION ADFS (Login/Mdp)")
+    
+    # 2️. Analyse du formulaire de login ADFS.
+    soupAdfs = BeautifulSoup(r2.text, "html.parser")
+    formAdfs = soupAdfs.find("form")
+    if formAdfs is None:
+        print("❌ Échec de la récupération du formulaire ADFS.")
+        return None
+    
+    print("✅ Le formulaire ADFS a été récupéré correctement")
+
+
+    # Extraction des champs cachés et de l'URL d'action.
+    actionAdfs = html.unescape(formAdfs["action"])
+    actionAdfsAbsolute = urljoin(r2.url, actionAdfs)
+    dataAdfs = {i.get("name"): i.get("value", "") 
+                 for i in formAdfs.find_all("input") if i.get("name")}
+
+    # Ajout des identifiants (mot de passe et email).
+    dataAdfs["UserName"] = email
+    dataAdfs["Password"] = mdp
+    
+    # 3️. POST des identifiants vers ADFS.
+    r3 = session.post(actionAdfsAbsolute, data=dataAdfs)
+    if r3.status_code != 200:
+        print("❌ Échec de l'authentification ADFS.")
+        return None
+    print(f"✅ ADFS Login réussi -> Status: {r3.status_code}")
+    
+    if "Opération en cours..." not in r3.text:
+         print("❌ Erreur d'authentification ADFS (mauvais mot de passe ou ADFS a changé).")
+         return None
+    return r3
+
+
+def authenticationSAML(r3):
+    global session
+    print("\n3. FÉDÉRATION SAML (Transfert de Jeton)")
+    
+    # 4️. Analyse du formulaire de réponse SAML (jeton d'identité).
+    soupSaml = BeautifulSoup(r3.text, "html.parser")
+    samlForm = soupSaml.find("form")
+    if samlForm is None:
+        print("❌ Formulaire SAML (réponse) introuvable après login ADFS.")
+        return None
+    print("✅ Formulaire SAML (réponse) récupéré avec succès.")
+
+    # Extraction de l'action URL et des champs SAML (SAMLResponse, RelayState).
+    actionSaml = html.unescape(samlForm["action"])
+    samlData = {i.get("name"): i.get("value", "") 
+                 for i in samlForm.find_all("input") if i.get("name")}
+
+    # 5️. POST du jeton SAML vers l'ENT/WAYF pour finaliser la connexion.
+    r4 = session.post(actionSaml, data=samlData, allow_redirects=True)
+    if r4.status_code != 200:
+        print("❌ Échec de la soumission SAML finale.")
+        return None
+    print(f"✅ SAML POST réussi -> URL finale: {r4.url}")
+
+    # 6️. Vérification finale de l'accès à l'ENT.
+    entUrl = "https://ent.cesi.fr/mon-emploi-du-temps"
+    r5 = session.get(entUrl) # GET pour s'assurer que les cookies sont bien positionnés
+
+    if "mon-emploi-du-temps" in r5.url:
+        print("✅ CONNEXION RÉUSSIE à l'ENT.")
+    else:
+        print("❌ ÉCHEC de la connexion à l'ENT. (Redirection incorrecte)")
+        return None
+    
+
+def recupererDonnees(nombreDeJours, pathJson):
+    global session
+    # requete GET final avec session
+    dataJson = [] 
+    jsonPeriodeEntreprise = [{
+        "code": "ENT-2026",
+        "title": "Période en entreprise",
+        "allDay": True,
+        "nightly": True,
+        "start": "modif",
+        "end": "modif",
+        "nomModule": "ENTREPRISE",
+        "matiere": "Période en entreprise",
+        "salles": [{"nomSalle": "ENTREPRISE"}],
+        "intervenants": [],
+        "participants": [{"libelleGroupe": "FISA INFO 25 28 Rouen"}]
+    }]
+
+    for i in range(nombreDeJours):
+        dateObjet = date.today() + timedelta(days=i)
+        dateCible = dateObjet.strftime("%Y-%m-%d")
+        
+        #  booleen : 5 = Samedi 6 = Dimanche
+        estWeekEnd = dateObjet.weekday() >= 5
+
+        apiUrl = f"https://ent.cesi.fr/api/seance/all?start={dateCible}&end={dateCible}&codePersonne=2660723&_=1764341401797"
+
+        try:
+            response = session.get(apiUrl, timeout=10)
+            response.raise_for_status()
+            seances = response.json()
+            
+            if not seances:
+                raise ValueError("Aucune séance école trouvée")
+            
+            dataJson.extend(seances)
+
+        except Exception as e:
+            # ne pas ajouter de periode entreprise le we
+            if not estWeekEnd:
+                print(f"⚠️ Jour {dateCible} : Période entreprise détectée.")
+                entJour = jsonPeriodeEntreprise[0].copy()
+                entJour["start"] = f"{dateCible}T08:30:00+01"
+                entJour["end"] = f"{dateCible}T17:30:00+01"
+                entJour["code"] = f"ENT-{dateCible}"
+                dataJson.append(entJour)
+            else:
+                print(f"⚠️ Jour {dateCible} : Week-end, rien à ajouter.")
+
+    # enregistrement du fichier
+    timestamp = datetime.now().strftime("%d-%m-%Y_%Hh%M")
+    
+    # Docker : CHEMIN VERS VOLUME !!!!!
+    nomFichier = os.path.join(pathJson, f"{timestamp}.json")
+    
+    with open(nomFichier, 'w', encoding='utf-8') as f:
+        json.dump(dataJson, f, ensure_ascii=False, indent=4)
+        
+    print(f"✅ {len(dataJson)} séances/jours enregistrés dans : {nomFichier}")
+    return None
+</file>
+
+<file path="docker-compose.yml">
+services:
+  # client
+  web-server: 
+    build: 
+      context: ./client
+    container_name: scrapedt-client
+    ports:
+      # Mappe le port 80 du conteneur (Apache) au port 80 de votre machine hôte
+      - "8081:80" 
+    volumes:
+      - ./server/ics:/usr/local/apache2/htdocs/api_data/
+    restart: unless-stopped # redémarre toujours le service
+    networks:
+      - npm-network
+
+
+  # serveur
+  script-runner:
+    build: 
+      context: ./server
+    container_name: scrapedt-server
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    volumes:
+      - ./server/ics:/app/partage # pr le ics
+      - ./server:/app/ # pr le code
+    restart: unless-stopped
+    networks:
+      - npm-network
+
+networks:
+  npm-network:
+    external: true
+</file>
+
+</files>
