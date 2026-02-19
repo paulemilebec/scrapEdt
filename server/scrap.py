@@ -12,171 +12,180 @@ global session
 
 def authenticationSSO(email):
     global session
-    # autentification SSO via le protocole SAML
-    # WAYF
-    # SAML (formulaire automatique)
+    """
+    SSO authentication via SAML protocol.
+    Handles WAYF redirection and SAML form auto-submission.
+    """
 
     session = requests.Session()
 
-    print("\n-------------- Début du scraping --------------")
+    print("\n-------------- Starting scraping process --------------")
 
-    print("1. INITIALISATION (WAYF)")
+    print("1. INITIALIZATION (WAYF)")
     
-    # 1️. Requête GET initiale vers le service WAYF avec l'email pour obtenir la redirection ADFS.
+    # Step 1: Initial GET request to WAYF service with email to obtain ADFS redirection.
     urlWayf = f"https://wayf.cesi.fr/login?client_name=ClientIdpViaCesiFr&needs_client_redirection=true&UserName={email}"
     r1 = session.get(urlWayf)
     if r1.status_code != 200:
-        print("❌ Échec de la connexion au WAYF.")
+        print("[ERROR] Failed to connect to WAYF.")
         return None
     
-    print(f"✅ Connexion au WAYF réussie -> Status: {r1.status_code}")
+    print(f"[SUCCESS] Connected to WAYF -> Status: {r1.status_code}")
 
-    # --- Étape intermédiaire d'auto-soumission SAML ---
+    # Intermediate SAML auto-submission step
     soup = BeautifulSoup(r1.text, "html.parser")
     form = soup.find("form")
     if form and form.get("action"):
         actionUrl = html.unescape(form["action"])
         relayState = html.unescape(form.find("input", {"name": "RelayState"})["value"])
         samlRequest = html.unescape(form.find("input", {"name": "SAMLRequest"})["value"])
-        # POST de l'auto-soumission pour arriver à la vraie page de login ADFS.
-        # envoie le ticket SAML au serveur d'identité (ADFS).
+        # POST auto-submission to reach the actual ADFS login page.
+        # Sends the SAML ticket to the identity server (ADFS).
         r2 = session.post(actionUrl, data={"RelayState": relayState, "SAMLRequest": samlRequest})
     else:
-        r2 = r1 # Si pas d'auto-submit, r2 est r1
+        r2 = r1  # If no auto-submit, r2 is r1
 
-    print("✅ Formulaire auto-soumission SAML complété")
+    print("[SUCCESS] SAML auto-submission form completed")
     return r2
 
 
 def authenticationADFS(r2, email, mdp):
     global session
-    print("\n2. AUTHENTIFICATION ADFS (Login/Mdp)")
+    print("\n2. ADFS AUTHENTICATION (Login/Password)")
     
-    # 2️. Analyse du formulaire de login ADFS.
+    # Step 2: Parse the ADFS login form.
     soupAdfs = BeautifulSoup(r2.text, "html.parser")
     formAdfs = soupAdfs.find("form")
     if formAdfs is None:
-        print("❌ Échec de la récupération du formulaire ADFS.")
+        print("[ERROR] Failed to retrieve ADFS form.")
         return None
     
-    print("✅ Le formulaire ADFS a été récupéré correctement")
+    print("[SUCCESS] ADFS form retrieved successfully")
 
 
-    # Extraction des champs cachés et de l'URL d'action.
+    # Extract hidden fields and action URL.
     actionAdfs = html.unescape(formAdfs["action"])
     actionAdfsAbsolute = urljoin(r2.url, actionAdfs)
     dataAdfs = {i.get("name"): i.get("value", "") 
                  for i in formAdfs.find_all("input") if i.get("name")}
 
-    # Ajout des identifiants (mot de passe et email).
+    # Add credentials (email and password).
     dataAdfs["UserName"] = email
     dataAdfs["Password"] = mdp
     
-    # 3️. POST des identifiants vers ADFS.
+    # Step 3: POST credentials to ADFS.
     r3 = session.post(actionAdfsAbsolute, data=dataAdfs)
     if r3.status_code != 200:
-        print("❌ Échec de l'authentification ADFS.")
+        print("[ERROR] ADFS authentication failed.")
         return None
-    print(f"✅ ADFS Login réussi -> Status: {r3.status_code}")
+    print(f"[SUCCESS] ADFS Login successful -> Status: {r3.status_code}")
     
     if "Opération en cours..." not in r3.text:
-         print("❌ Erreur d'authentification ADFS (mauvais mot de passe ou ADFS a changé).")
+         print("[ERROR] ADFS authentication error (invalid password or ADFS has changed).")
          return None
     return r3
 
 
 def authenticationSAML(r3):
     global session
-    print("\n3. FÉDÉRATION SAML (Transfert de Jeton)")
+    print("\n3. SAML FEDERATION (Token Transfer)")
     
-    # 4️. Analyse du formulaire de réponse SAML (jeton d'identité).
+    # Step 4: Parse the SAML response form (identity token).
     soupSaml = BeautifulSoup(r3.text, "html.parser")
     samlForm = soupSaml.find("form")
     if samlForm is None:
-        print("❌ Formulaire SAML (réponse) introuvable après login ADFS.")
+        print("[ERROR] SAML response form not found after ADFS login.")
         return None
-    print("✅ Formulaire SAML (réponse) récupéré avec succès.")
+    print("[SUCCESS] SAML response form retrieved successfully.")
 
-    # Extraction de l'action URL et des champs SAML (SAMLResponse, RelayState).
+    # Extract action URL and SAML fields (SAMLResponse, RelayState).
     actionSaml = html.unescape(samlForm["action"])
     samlData = {i.get("name"): i.get("value", "") 
                  for i in samlForm.find_all("input") if i.get("name")}
 
-    # 5️. POST du jeton SAML vers l'ENT/WAYF pour finaliser la connexion.
+    # Step 5: POST SAML token to ENT/WAYF to finalize connection.
     r4 = session.post(actionSaml, data=samlData, allow_redirects=True)
     if r4.status_code != 200:
-        print("❌ Échec de la soumission SAML finale.")
+        print("[ERROR] Final SAML submission failed.")
         return None
-    print(f"✅ SAML POST réussi -> URL finale: {r4.url}")
+    print(f"[SUCCESS] SAML POST successful -> Final URL: {r4.url}")
 
-    # 6️. Vérification finale de l'accès à l'ENT.
+    # Step 6: Final verification of ENT access.
     entUrl = "https://ent.cesi.fr/mon-emploi-du-temps"
-    r5 = session.get(entUrl) # GET pour s'assurer que les cookies sont bien positionnés
+    r5 = session.get(entUrl)  # GET to ensure cookies are properly set
 
     if "mon-emploi-du-temps" in r5.url:
-        print("✅ CONNEXION RÉUSSIE à l'ENT.")
+        print("[SUCCESS] Connected to ENT successfully.")
     else:
-        print("❌ ÉCHEC de la connexion à l'ENT. (Redirection incorrecte)")
+        print("[ERROR] Failed to connect to ENT. (Incorrect redirection)")
         return None
     
 
 def recupererDonnees(nombreDeJours, pathJson):
     global session
-    # requete GET final avec session
     dataJson = [] 
-    jsonPeriodeEntreprise = [{
-        "code": "ENT-2026",
+    
+    # Template de base pour l'entreprise
+    entreprise_template = {
         "title": "Période en entreprise",
         "allDay": True,
         "nightly": True,
-        "start": "modif",
-        "end": "modif",
         "nomModule": "ENTREPRISE",
         "matiere": "Période en entreprise",
         "salles": [{"nomSalle": "ENTREPRISE"}],
         "intervenants": [],
         "participants": [{"libelleGroupe": "FISA INFO 25 28 Rouen"}]
-    }]
+    }
 
     for i in range(nombreDeJours):
         dateObjet = date.today() + timedelta(days=i)
         dateCible = dateObjet.strftime("%Y-%m-%d")
-        
-        #  booleen : 5 = Samedi 6 = Dimanche
         estWeekEnd = dateObjet.weekday() >= 5
-
+        
         apiUrl = f"https://ent.cesi.fr/api/seance/all?start={dateCible}&end={dateCible}&codePersonne=2660723&_=1764341401797"
 
         try:
             response = session.get(apiUrl, timeout=10)
-            response.raise_for_status()
+            response.raise_for_status() # Lève une erreur si HTTP 4xx ou 5xx
             seances = response.json()
             
-            if not seances:
-                raise ValueError("Aucune séance école trouvée")
-            
-            dataJson.extend(seances)
-
-        except Exception as e:
-            # ne pas ajouter de periode entreprise le we
-            if not estWeekEnd:
-                print(f"⚠️ Jour {dateCible} : Période entreprise détectée.")
-                entJour = jsonPeriodeEntreprise[0].copy()
-                entJour["start"] = f"{dateCible}T08:30:00+01"
-                entJour["end"] = f"{dateCible}T17:30:00+01"
-                entJour["code"] = f"ENT-{dateCible}"
-                dataJson.append(entJour)
+            if seances and len(seances) > 0:
+                # CAS 1 : Il y a des cours à l'école
+                dataJson.extend(seances)
             else:
-                print(f"⚠️ Jour {dateCible} : Week-end, rien à ajouter.")
+                # CAS 2 : Réponse OK (200) mais liste vide -> C'est une période entreprise
+                if not estWeekEnd:
+                    print(f"[INFO] Jour {dateCible} : Pas de cours école, ajout entreprise.")
+                    entJour = entreprise_template.copy()
+                    entJour.update({
+                        "start": f"{dateCible}T08:30:00+01",
+                        "end": f"{dateCible}T17:30:00+01",
+                        "code": f"ENT-{dateCible}"
+                    })
+                    dataJson.append(entJour)
 
-    # enregistrement du fichier
+        except requests.exceptions.RequestException as e:
+            # CAS 3 : Erreur réseau réelle (Timeout, DNS, 500)
+            # On ne déduit rien pour ne pas polluer le calendrier avec des fausses infos
+            print(f"[ERROR] Impossible de vérifier le jour {dateCible} (Erreur réseau) : {e}")
+            continue 
+
+    # --- SAUVEGARDE SÉCURISÉE (Écriture atomique) ---
     timestamp = datetime.now().strftime("%d-%m-%Y_%Hh%M")
+    nomFichierFinal = os.path.join(pathJson, f"{timestamp}.json")
+    nomFichierTemp = nomFichierFinal + ".tmp"
     
-    # Docker : CHEMIN VERS VOLUME !!!!!
-    nomFichier = os.path.join(pathJson, f"{timestamp}.json")
-    
-    with open(nomFichier, 'w', encoding='utf-8') as f:
-        json.dump(dataJson, f, ensure_ascii=False, indent=4)
+    try:
+        # 1. Écrire dans un fichier temporaire
+        with open(nomFichierTemp, 'w', encoding='utf-8') as f:
+            json.dump(dataJson, f, ensure_ascii=False, indent=4)
         
-    print(f"✅ {len(dataJson)} séances/jours enregistrés dans : {nomFichier}")
+        # 2. Renommer le fichier (Opération atomique)
+        os.replace(nomFichierTemp, nomFichierFinal)
+        print(f"[SUCCESS] {len(dataJson)} séances enregistrées dans : {nomFichierFinal}")
+    except Exception as e:
+        print(f"[ERROR] Échec de l'écriture du fichier JSON : {e}")
+        if os.path.exists(nomFichierTemp):
+            os.remove(nomFichierTemp)
+
     return None

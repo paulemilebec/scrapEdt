@@ -5,32 +5,63 @@ import json
 import os
 
 
+def cleanOldFiles(pathJson, max_files=7):
+    """Remove the oldest JSON files if the limit is exceeded."""
+    try:
+        # List only .json files
+        files = [f for f in os.listdir(pathJson) if f.endswith(".json")]
+        
+        if len(files) > max_files:
+            # Create a list of tuples (filename, modification_date)
+            files_with_time = []
+            for f in files:
+                full_path = os.path.join(pathJson, f)
+                files_with_time.append((full_path, os.path.getmtime(full_path)))
+            
+            # Sort by date (oldest first)
+            files_with_time.sort(key=lambda x: x[1])
+            
+            # Number of files to delete
+            to_delete_count = len(files_with_time) - max_files
+            
+            print(f"[CLEANUP] {to_delete_count} old file(s) detected beyond limit ({max_files}).")
+            
+            for i in range(to_delete_count):
+                file_to_remove = files_with_time[i][0]
+                os.remove(file_to_remove)
+                print(f"[DELETED] {os.path.basename(file_to_remove)}")
+                
+    except Exception as e:
+        print(f"[WARNING] Error during file cleanup: {e}")
+
+
 def convert(fileName, cal_global, UIDS_DEJA_VUS, pathJson):
     completPathJson = os.path.join(pathJson, fileName)
-    
     try:
         with open(completPathJson, "r", encoding="utf-8") as f:
             dataJson = json.load(f)
     except Exception as e:
-        print(f"❌ Erreur de lecture du fichier JSON {fileName}: {e}")
-        return 0
-
+        print(f"[ERROR] Failed to read JSON file {fileName}: {e}")
+        # On retourne None pour signaler une ERREUR technique
+        return None 
+    
     evenementsAjoutes = 0
     
-    # Vérification que le JSON est bien une liste de séances
-    if isinstance(dataJson, list):
-        for seance in dataJson:
-            try:
-                # On n'incrémente le compteur que si processClass réussit
-                if processClass(seance, UIDS_DEJA_VUS, cal_global):
-                    evenementsAjoutes += 1
-            except Exception as e:
-                # Si une séance pose problème, on l'affiche mais on continue la boucle
-                print(f"⚠️ Erreur sur une séance dans {fileName}: {e}")
-                continue
-    else:
-        print(f"⚠️ Le fichier {fileName} ne contient pas une liste de séances valide (Type: {type(dataJson)}).")
-        
+    # Vérification que le JSON est bien une liste
+    if not isinstance(dataJson, list):
+        print(f"[WARNING] Invalid format in {fileName}: Expected a list.")
+        # Format invalide = Erreur technique
+        return None
+
+    for seance in dataJson:
+        try:
+            if processClass(seance, UIDS_DEJA_VUS, cal_global):
+                evenementsAjoutes += 1
+        except Exception as e:
+            print(f"[WARNING] Error processing session in {fileName}: {e}")
+            continue
+            
+    # On retourne un nombre (0 ou plus) pour signaler un SUCCÈS
     return evenementsAjoutes
 
 def processClass(seance, UIDS_DEJA_VUS, cal_global):
@@ -49,13 +80,13 @@ def processClass(seance, UIDS_DEJA_VUS, cal_global):
     
     fullUid = f"{uid}@ent.cesi.fr"
 
-    # Vérification doublons
+    # Duplicate check
     if fullUid in UIDS_DEJA_VUS:
         return False
     
     UIDS_DEJA_VUS.add(fullUid)
 
-    # --- Construction des champs ---
+    # Build event fields
     summary = titleVal or 'Cours sans titre'
     if titleVal == "A planifier":
         summary = "Autonomie"
@@ -66,7 +97,7 @@ def processClass(seance, UIDS_DEJA_VUS, cal_global):
     elif "Prosit" in summary: categoriesList.append("Prosit")
     elif "Workshop" in summary: categoriesList.append("Workshop")
     
-    # Salles (Sécurisé contre le None)
+    # Rooms (safely handle None values)
     salles_raw = seance.get('salles') or []
     salles_list = []
     if isinstance(salles_raw, list):
@@ -81,7 +112,7 @@ def processClass(seance, UIDS_DEJA_VUS, cal_global):
         f"Lieu: {salles}",
     ]
     
-    # Intervenants
+    # Instructors
     intervenants = seance.get('intervenants') or []
     nomsProfs = []
     if isinstance(intervenants, list):
@@ -114,18 +145,18 @@ def processClass(seance, UIDS_DEJA_VUS, cal_global):
         dtstart = datetime.fromisoformat(seance['start'])
         dtend = datetime.fromisoformat(seance['end'])
     except Exception:
-        # Si pas de date, l'événement est invalide
+        # Invalid event if no date is present
         return False
 
-    # Suppression Jeudi après-midi (13:30 - 17:30)
+    # Exclude Thursday afternoon sessions (13:30 - 17:30)
     HEURE_MIN = "13:30"
     HEURE_MAX = "17:30"
-    if dtstart.weekday() == 3: # 3 = Jeudi
+    if dtstart.weekday() == 3:  # 3 = Thursday
         if dtstart.strftime("%H:%M") == HEURE_MIN and dtend.strftime("%H:%M") == HEURE_MAX:
-            print(f"⚙️ Exclusion : {summary} le Jeudi (13h30-17h30).")
+            print(f"[EXCLUDED] {summary} on Thursday (13:30-17:30).")
             return False
 
-    # Création de l'événement iCal
+    # Create iCal event
     event = Event()
     event.add('categories', categoriesList)
     event.add('summary', summary)
@@ -135,7 +166,7 @@ def processClass(seance, UIDS_DEJA_VUS, cal_global):
     event.add('description', description)
     event.add('uid', fullUid)
     
-    # Organisateur
+    # Organizer
     if isinstance(intervenants, list):
         for i in intervenants:
             if isinstance(i, dict) and i.get('adresseMail'):
@@ -151,54 +182,43 @@ def processClass(seance, UIDS_DEJA_VUS, cal_global):
 
 
 def mainCon(pathIcs, pathJson):
-    # Initialisation du Calendrier Global pour la Fusion
+    # Step 1: Cleanup old files before processing
+    cleanOldFiles(pathJson, max_files=7)
+
     cal_final = Calendar()
     cal_final.add('prodid', '-//Emploi du temps CESI//fr')
     cal_final.add('version', '2.0')
     cal_final.add('X-WR-CALNAME', 'Emploi du temps CESI')
     
-    # Structure de données pour la déduplication
     uids_vus = set()
     totalEvenementsAjoutes = 0
     fichiersTraites = 0
 
-    print("\n\n-------------- Démarrage de la fusion --------------")
+    print("\n-------------- Starting merge process --------------")
     
     try:
-        # Parcourt tous les fichiers JSON dans le répertoire source
         if not os.path.exists(pathJson):
-            print(f"\n❌ Erreur : Le répertoire source {pathJson} est introuvable. Veuillez vérifier le chemin.")
+            print(f"\n[ERROR] Source directory {pathJson} not found.")
             return
 
-
+        # Process remaining files (max 7 after cleanup)
         for file in os.listdir(pathJson):
             if file.endswith(".json"):
                 fichiersTraites += 1
-                print(f"⚙️ Traitement du fichier : {file}...")
-                
-                # Appelle la fonction convert() pour ajouter les événements uniques au cal_final
+                print(f"[PROCESSING] File: {file}...")
                 evenementsAjoutes = convert(file, cal_final, uids_vus, pathJson)
                 if evenementsAjoutes is not None:
                     totalEvenementsAjoutes += evenementsAjoutes
         
-        # Écriture du fichier .ics final
-        
-        nomFichierFinal = "emploisDuTemps" + ".ics" #os.path.splitext(file)[0]
+        nomFichierFinal = "emploisDuTemps.ics"
         cheminFinalIcs = os.path.join(pathIcs, nomFichierFinal)
         
-        # Écriture du contenu binaire du calendrier
         with open(cheminFinalIcs, 'wb') as f:
             f.write(cal_final.to_ical())
             
         print("-" * 40)
-        print(f"✅ Conversion et fusion réussies après traitement de {fichiersTraites} fichiers.")
-        print(f"Nombre total d'événements uniques enregistrés : {totalEvenementsAjoutes}")
-        print(f"Fichier final sauvegardé dans : {cheminFinalIcs}")
-        print("Vous pouvez importer ce fichier unique dans votre logiciel de calendrier.")
+        print(f"[SUCCESS] Completed: {fichiersTraites} files merged.")
+        print(f"Output file: {cheminFinalIcs}")
 
-    except FileNotFoundError:
-        print(f"\n❌ Erreur : Le répertoire source {pathJson} est introuvable. Veuillez vérifier le chemin.")
     except Exception as e:
-        print(f"\n❌ Erreur inattendue lors de la fusion : {e}")
-
-
+        print(f"\n[ERROR] Unexpected error during merge: {e}")
