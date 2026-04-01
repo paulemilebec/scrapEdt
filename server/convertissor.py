@@ -56,7 +56,7 @@ def processClass(seance, UIDS_DEJA_VUS, cal_global):
         seed = f"{matiere}-{jour}"
         uid_str = hashlib.md5(seed.encode('utf-8')).hexdigest()
     
-    fullUid = f"{uid_str}@ent.cesi.fr"
+    fullUid = f"{uid_str}@test" #@ent.cesi.fr"
 
     if fullUid in UIDS_DEJA_VUS:
         return False
