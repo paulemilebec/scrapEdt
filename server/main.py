@@ -18,17 +18,13 @@ def execution():
         mdp = os.getenv("MDP")
         nombreDeJours = 30 
         
-        # pathIcs = os.path.join("server", "ics")
-        # pathJson = os.path.join("server", "jsonAPI")
-        
-        # Docker paths (for production)
-        pathIcs = "/app/partage"
-        pathJson = "/app/jsonAPI"
+        pathIcs = "C:\\Users\\pebec\\Documents\\Projets perso\\Scrap edt\\server\\partage" #/app/partage"
+        pathJson = "C:\\Users\\pebec\\Documents\\Projets perso\\Scrap edt\\server\\jsonAPI" #"/app/jsonAPI"
 
         os.makedirs(pathIcs, exist_ok=True)
         os.makedirs(pathJson, exist_ok=True)
 
-        print(f"\n--- [LOG] Execution started: {datetime.datetime.now()} ---")
+        print(f"\n[LOG] Execution started: {datetime.datetime.now()}")
 
         # Step 1: Authentication
         r2 = authenticationSSO(email)
@@ -43,7 +39,7 @@ def execution():
         recupererDonnees(nombreDeJours, pathJson)
         mainCon(pathIcs, pathJson)
 
-        print(f"--- [LOG] Execution completed successfully at {datetime.datetime.now()} ---")
+        print(f"[LOG] Execution completed successfully at {datetime.datetime.now()}")
 
     except requests.exceptions.RequestException as e:
         print(f"[ERROR] Network error detected: {e}")

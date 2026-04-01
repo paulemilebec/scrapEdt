@@ -3,3 +3,10 @@ Todo :
     Garder les anciens cours
     Mettre des couleurs avec X-APPLE-CALENDAR-COLOR ou X-GOOGLE-CALENDAR-COLOR
     Mettre les addresses mails des profs
+
+Fix:
+    Gestion du cache : Côté Serveur (Important) : Comme ton site est sur OVH, si tu utilises un script PHP ou Python pour servir le fichier, assure-toi d'ajouter ces headers dans ta réponse HTTP :
+
+    Cache-Control: no-cache, no-store, must-revalidate
+    Pragma: no-cache
+    Expires: 0

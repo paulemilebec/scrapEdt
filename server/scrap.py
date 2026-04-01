@@ -147,7 +147,15 @@ def recupererDonnees(nombreDeJours, pathJson):
         try:
             response = session.get(apiUrl, timeout=10)
             response.raise_for_status() # Lève une erreur si HTTP 4xx ou 5xx
-            seances = response.json()
+            if not response.text.strip():
+                print(f"[INFO] Jour {dateCible} : Réponse vide reçue, ajout entreprise.")
+                seances = []
+            else:
+                try:
+                    seances = response.json()
+                except ValueError:
+                    print(f"[WARNING] Réponse non-JSON reçue pour le {dateCible}")
+                    seances = []
             
             if seances and len(seances) > 0:
                 # CAS 1 : Il y a des cours à l'école
