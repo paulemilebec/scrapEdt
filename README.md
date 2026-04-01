@@ -10,3 +10,8 @@ Fix:
     Cache-Control: no-cache, no-store, must-revalidate
     Pragma: no-cache
     Expires: 0
+
+docker stop scrapedt-server
+docker rm scrapedt-server
+docker build -t scrapedt-script-runner .
+docker run -d --name scrapedt-server scrapedt-script-runner

@@ -3,6 +3,7 @@ from icalendar import Calendar, Event, vCalAddress
 import hashlib
 import json
 import os
+import re
 
 def cleanOldFiles(pathJson, max_files=7):
     """Supprime les fichiers JSON les plus anciens si la limite est dépassée."""
@@ -91,8 +92,12 @@ def processClass(seance, UIDS_DEJA_VUS, cal_global):
         f"Intervenant(s): {', '.join(nomsProfs)}" if nomsProfs else None,
         f"Groupe(s): {', '.join(groupes)}" if groupes else None
     ]))
-
+    
     # 5. CRÉATION EVENT
+    summary = clean_text(seance.get('title'))
+    salles = ", ".join(salles_list)
+    description = clean_text(description).replace('\n', '\\n')
+
     event = Event()
     event.add('uid', fullUid)
     event.add('dtstamp', dtstamp) 
@@ -130,6 +135,15 @@ def convert(fileName, cal_global, UIDS_DEJA_VUS, pathJson):
         if processClass(seance, UIDS_DEJA_VUS, cal_global):
             evenementsAjoutes += 1
     return evenementsAjoutes
+
+
+def clean_text(text):
+    if not text:
+        return ""
+    text = text.replace('\xa0', ' ')
+    text = " ".join(text.split())
+    return text
+
 
 def mainCon(pathIcs, pathJson):
     print("\n-------------- Starting merge process --------------")
