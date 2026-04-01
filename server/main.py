@@ -19,8 +19,8 @@ def execution():
         nombreDeJours = 30 
         
         rootTest = "C:\\Users\\pebec\\Documents\\Projets perso\\Scrap edt\\server\\"
-        pathIcs = rootTest + "/partage"
-        pathJson = rootTest + "/jsonAPI"
+        pathIcs = "app" + "/partage"
+        pathJson = "app" + "/jsonAPI"
 
         os.makedirs(pathIcs, exist_ok=True)
         os.makedirs(pathJson, exist_ok=True)
