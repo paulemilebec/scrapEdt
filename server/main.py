@@ -18,8 +18,9 @@ def execution():
         mdp = os.getenv("MDP")
         nombreDeJours = 30 
         
-        pathIcs = "C:\\Users\\pebec\\Documents\\Projets perso\\Scrap edt\\server\\partage" #/app/partage"
-        pathJson = "C:\\Users\\pebec\\Documents\\Projets perso\\Scrap edt\\server\\jsonAPI" #"/app/jsonAPI"
+        # rootTest = "C:\\Users\\pebec\\Documents\\Projets perso\\Scrap edt\\server\\"
+        pathIcs = "/app/partage"
+        pathJson = "/app/jsonAPI"
 
         os.makedirs(pathIcs, exist_ok=True)
         os.makedirs(pathJson, exist_ok=True)
