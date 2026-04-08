@@ -17,7 +17,6 @@ docker build -t scrapedt-script-runner .
 docker run -d --name scrapedt-server scrapedt-script-runner
 
 
-user@serveur2 ~/scrapEdt $ git fetch --all
-user@serveur2 ~/scrapEdt $ git reset --hard origin/main
-HEAD is now at 3a8ef16 test
-user@serveur2 ~/scrapEdt $ docker compose up -d --build
+git fetch --all
+git reset --hard origin/main
+docker compose up -d --build
