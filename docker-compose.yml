@@ -1,20 +1,18 @@
 services:
-  # client
+  # Client : Serveur Web Apache
   web-server: 
     build: 
       context: ./client
     container_name: scrapedt-client
     ports:
-      # Mappe le port 80 du conteneur (Apache) au port 80 de votre machine hôte
       - "8081:80" 
     volumes:
       - ./server/ics:/usr/local/apache2/htdocs/api_data/
-    restart: unless-stopped # redémarre toujours le service
+    restart: unless-stopped
     networks:
       - npm-network
 
-
-  # serveur
+  # Serveur : Script Python
   script-runner:
     build: 
       context: ./server
@@ -24,8 +22,8 @@ services:
     env_file:
       - .env
     volumes:
-      - ./server/ics:/app/partage # pr le ics
-      - ./server:/app/ # pr le code
+      - ./server/ics:/app/ics
+      - ./server:/app
     restart: unless-stopped
     networks:
       - npm-network
