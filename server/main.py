@@ -18,7 +18,6 @@ def execution():
         mdp = os.getenv("MDP")
         nombreDeJours = 30 
         
-        # rootTest = "C:\\Users\\pebec\\Documents\\Projets perso\\Scrap edt\\server\\"
         pathIcs = "/app/ics"
         pathJson = "/app/jsonAPI"
 
