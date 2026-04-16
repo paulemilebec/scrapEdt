@@ -8,10 +8,20 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="url-container">
-        <input type="text" id="calendarUrl" readonly value="https://scrapedt.paulemilebecquart.ovh/api_data/emploisDuTemps.ics">
-        <button onclick="copyToClipboard()">Copier</button>
-    </div>
+    <main class="page-shell">
+        <section class="copy-card" aria-labelledby="copy-title">
+            <p class="kicker">Synchronisation calendrier</p>
+            <h1 id="copy-title">Ajoutez votre emploi du temps en un clic</h1>
+            <p class="lead">
+                Copiez le lien ICS ci-dessous, puis importez-le dans Outlook & Google Calendar & Apple Calendar ou votre application de calendrier favorite.
+            </p>
+            <div class="url-container">
+                <input type="text" id="calendarUrl" readonly value="https://scrapedt.paulemilebecquart.ovh/api_data/emploisDuTemps.ics">
+                <button id="copyButton" onclick="copyToClipboard()">Copier le lien</button>
+            </div>
+            <p id="copyStatus" class="copy-status" aria-live="polite"></p>
+        </section>
+    </main>
     
     <a href="https://github.com/paulemilebec/scrapEdt" target="_blank" class="github-link">
         <svg height="32" width="32" viewBox="0 0 16 16" fill="currentColor">
@@ -22,8 +32,16 @@
     <script>
         function copyToClipboard() {
             const copyText = document.getElementById("calendarUrl");
+            const copyStatus = document.getElementById("copyStatus");
+            const copyButton = document.getElementById("copyButton");
             navigator.clipboard.writeText(copyText.value).then(() => {
-                /*alert("Copié !");*/
+                copyStatus.textContent = "Lien copié dans le presse-papiers.";
+                copyButton.textContent = "Copié";
+                setTimeout(() => {
+                    copyButton.textContent = "Copier le lien";
+                }, 1400);
+            }).catch(() => {
+                copyStatus.textContent = "Impossible de copier automatiquement. Sélectionnez le lien et copiez-le manuellement.";
             });
         }
     </script>

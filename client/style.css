@@ -1,76 +1,167 @@
+:root {
+  --bg-top: #0f2f42;
+  --bg-bottom: #184b5a;
+  --card-bg: rgba(250, 252, 250, 0.96);
+  --text-main: #11202b;
+  --text-soft: #30424d;
+  --line: #b8c8ce;
+  --accent: #ea6f3c;
+  --accent-strong: #c9562a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
+  min-height: 100vh;
+  color: var(--text-main);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 209, 179, 0.25) 0%, transparent 42%),
+    radial-gradient(circle at 88% 84%, rgba(118, 205, 196, 0.24) 0%, transparent 38%),
+    linear-gradient(150deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  padding: 34px;
+}
+
+.page-shell {
+  width: min(1180px, 100%);
+}
+
+.copy-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 22px;
+  box-shadow: 0 28px 70px rgba(3, 18, 27, 0.38);
+  padding: 38px;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+h1 {
+  margin: 10px 0 0;
+  font-size: clamp(1.7rem, 2.8vw, 2.4rem);
+  line-height: 1.15;
+}
+
+.lead {
+  margin: 14px 0 20px;
+  color: var(--text-soft);
+  max-width: 70ch;
+}
+
+.outlook-link-wrap {
+  margin: 0 0 20px;
+  color: var(--text-soft);
+  font-weight: 600;
+}
+
+.outlook-link-wrap a {
+  color: var(--accent-strong);
 }
 
 .url-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 100%;
 }
 
 #calendarUrl {
-  padding: 15px 20px;
-  font-size: 24px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  font-family: 'Courier New', monospace;
-  min-width: 500px;
+  width: 100%;
+  min-width: 0;
+  padding: 17px 20px;
+  font-size: clamp(1.02rem, 2vw, 1.18rem);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-family: "Consolas", "Courier New", monospace;
+  color: #06212f;
+  background: #ffffff;
 }
 
 button {
-  padding: 15px 30px;
-  font-size: 18px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
+  padding: 0 30px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
   cursor: pointer;
-  font-weight: 600;
-  transition: transform 0.2s;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 button:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+}
+
+.copy-status {
+  min-height: 1.25rem;
+  margin: 12px 2px 0;
+  color: #1f5a44;
+  font-size: 0.93rem;
 }
 
 .github-link {
   position: fixed;
-  bottom: 20px;
   right: 20px;
-  color: white;
-  opacity: 0.8;
-  transition: opacity 0.3s, transform 0.3s;
+  bottom: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(3, 16, 25, 0.35);
+  color: #f6fcff;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 50%;
-  backdrop-filter: blur(10px);
+  opacity: 0.88;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  backdrop-filter: blur(8px);
 }
 
 .github-link:hover {
   opacity: 1;
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
-@media (max-width: 768px) {
-  .url-container {
-    flex-direction: column;
-    margin: 20px;
+@media (max-width: 900px) {
+  .copy-card {
+    padding: 26px;
   }
-  
+
+  .url-container {
+    grid-template-columns: 1fr;
+  }
+
+  button {
+    min-height: 52px;
+  }
+}
+
+@media (max-width: 540px) {
+  body {
+    padding: 16px;
+  }
+
+  .copy-card {
+    border-radius: 16px;
+    padding: 18px;
+  }
+
   #calendarUrl {
-    min-width: auto;
+    padding: 14px 14px;
+    font-size: 0.97rem;
   }
 }
