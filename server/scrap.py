@@ -1,26 +1,31 @@
-from datetime import datetime, date, timedelta
-from dotenv import load_dotenv
-from urllib.parse import urljoin
-from bs4 import BeautifulSoup
-import requests
-import html
-import json
 import os
+import json
+import html
+from datetime import datetime, date, timedelta
+from urllib.parse import urljoin
+import requests
+from bs4 import BeautifulSoup
+import urllib3
 
-global session
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-def authenticationSSO(email):
-    global session
+def initialiserSession():
+    """Crée et configure la session de manière globale."""
+    session = requests.Session()
+    session.verify = False
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    })
+    return session
+
+
+def authenticationSSO(session, email):
     """
     SSO authentication via SAML protocol.
     Handles WAYF redirection and SAML form auto-submission.
     """
-
-    session = requests.Session()
-
     print("\n-------------- Starting scraping process --------------")
-
     print("1. INITIALIZATION (WAYF)")
     
     # Step 1: Initial GET request to WAYF service with email to obtain ADFS redirection.
@@ -39,8 +44,8 @@ def authenticationSSO(email):
         actionUrl = html.unescape(form["action"])
         relayState = html.unescape(form.find("input", {"name": "RelayState"})["value"])
         samlRequest = html.unescape(form.find("input", {"name": "SAMLRequest"})["value"])
+        
         # POST auto-submission to reach the actual ADFS login page.
-        # Sends the SAML ticket to the identity server (ADFS).
         r2 = session.post(actionUrl, data={"RelayState": relayState, "SAMLRequest": samlRequest})
     else:
         r2 = r1  # If no auto-submit, r2 is r1
@@ -49,8 +54,7 @@ def authenticationSSO(email):
     return r2
 
 
-def authenticationADFS(r2, email, mdp):
-    global session
+def authenticationADFS(session, r2, email, mdp):
     print("\n2. ADFS AUTHENTICATION (Login/Password)")
     
     # Step 2: Parse the ADFS login form.
@@ -61,7 +65,6 @@ def authenticationADFS(r2, email, mdp):
         return None
     
     print("[SUCCESS] ADFS form retrieved successfully")
-
 
     # Extract hidden fields and action URL.
     actionAdfs = html.unescape(formAdfs["action"])
@@ -86,8 +89,7 @@ def authenticationADFS(r2, email, mdp):
     return r3
 
 
-def authenticationSAML(r3):
-    global session
+def authenticationSAML(session, r3):
     print("\n3. SAML FEDERATION (Token Transfer)")
     
     # Step 4: Parse the SAML response form (identity token).
@@ -95,7 +97,7 @@ def authenticationSAML(r3):
     samlForm = soupSaml.find("form")
     if samlForm is None:
         print("[ERROR] SAML response form not found after ADFS login.")
-        return None
+        return False
     print("[SUCCESS] SAML response form retrieved successfully.")
 
     # Extract action URL and SAML fields (SAMLResponse, RelayState).
@@ -107,7 +109,7 @@ def authenticationSAML(r3):
     r4 = session.post(actionSaml, data=samlData, allow_redirects=True)
     if r4.status_code != 200:
         print("[ERROR] Final SAML submission failed.")
-        return None
+        return False
     print(f"[SUCCESS] SAML POST successful -> Final URL: {r4.url}")
 
     # Step 6: Final verification of ENT access.
@@ -116,17 +118,17 @@ def authenticationSAML(r3):
 
     if "mon-emploi-du-temps" in r5.url:
         print("[SUCCESS] Connected to ENT successfully.")
+        return True
     else:
         print("[ERROR] Failed to connect to ENT. (Incorrect redirection)")
-        return None
+        return False
     
 
-def recupererDonnees(nombreDeJours, pathJson):
-    global session
+def recupererDonnees(session, nombreDeJours, pathJson):
     dataJson = [] 
     
     # Template de base pour l'entreprise
-    entreprise_template = {
+    entrepriseTemplate = {
         "title": "Période en entreprise",
         "allDay": True,
         "nightly": True,
@@ -146,7 +148,7 @@ def recupererDonnees(nombreDeJours, pathJson):
 
         try:
             response = session.get(apiUrl, timeout=10)
-            response.raise_for_status() # Lève une erreur si HTTP 4xx ou 5xx
+            response.raise_for_status() 
             if not response.text.strip():
                 print(f"[INFO] Jour {dateCible} : Réponse vide reçue, ajout entreprise.")
                 seances = []
@@ -158,13 +160,11 @@ def recupererDonnees(nombreDeJours, pathJson):
                     seances = []
             
             if seances and len(seances) > 0:
-                # CAS 1 : Il y a des cours à l'école
                 dataJson.extend(seances)
             else:
-                # CAS 2 : Réponse OK (200) mais liste vide -> C'est une période entreprise
                 if not estWeekEnd:
                     print(f"[INFO] Jour {dateCible} : Pas de cours école, ajout entreprise.")
-                    entJour = entreprise_template.copy()
+                    entJour = entrepriseTemplate.copy()
                     entJour.update({
                         "start": f"{dateCible}T08:30:00+01",
                         "end": f"{dateCible}T17:30:00+01",
@@ -173,8 +173,6 @@ def recupererDonnees(nombreDeJours, pathJson):
                     dataJson.append(entJour)
 
         except requests.exceptions.RequestException as e:
-            # CAS 3 : Erreur réseau réelle (Timeout, DNS, 500)
-            # On ne déduit rien pour ne pas polluer le calendrier avec des fausses infos
             print(f"[ERROR] Impossible de vérifier le jour {dateCible} (Erreur réseau) : {e}")
             continue 
 
@@ -184,11 +182,9 @@ def recupererDonnees(nombreDeJours, pathJson):
     nomFichierTemp = nomFichierFinal + ".tmp"
     
     try:
-        # 1. Écrire dans un fichier temporaire
         with open(nomFichierTemp, 'w', encoding='utf-8') as f:
             json.dump(dataJson, f, ensure_ascii=False, indent=4)
         
-        # 2. Renommer le fichier (Opération atomique)
         os.replace(nomFichierTemp, nomFichierFinal)
         print(f"[SUCCESS] {len(dataJson)} séances enregistrées dans : {nomFichierFinal}")
     except Exception as e:
