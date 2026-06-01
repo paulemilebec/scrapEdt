@@ -20,7 +20,7 @@ def initialiserSession():
     return session
 
 
-def authenticationSSO(session, email):
+def authenticationSSO(session):
     """
     SSO authentication via SAML protocol.
     Handles WAYF redirection and SAML form auto-submission.
@@ -29,6 +29,7 @@ def authenticationSSO(session, email):
     print("1. INITIALIZATION (WAYF)")
     
     # Step 1: Initial GET request to WAYF service with email to obtain ADFS redirection.
+    email = os.getenv("EMAIL")
     urlWayf = f"https://wayf.cesi.fr/login?client_name=ClientIdpViaCesiFr&needs_client_redirection=true&UserName={email}"
     r1 = session.get(urlWayf)
     if r1.status_code != 200:
