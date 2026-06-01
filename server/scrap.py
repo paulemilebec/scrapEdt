@@ -7,26 +7,37 @@ import requests
 from bs4 import BeautifulSoup
 import urllib3
 
+# Désactive les warnings de sécurité dans le terminal à cause de verify=False
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def initialiserSession():
     """Crée et configure la session de manière globale."""
     session = requests.Session()
-    session.verify = False
+    session.verify = False  # Appliqué tt les .get() et .post()
     session.headers.update({
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     })
     return session
 
 
-def authenticationSSO(session, email = os.getenv("EMAIL")):
+def authenticationSSO():
     """
     SSO authentication via SAML protocol.
     Handles WAYF redirection and SAML form auto-submission.
+    Takes no arguments.
     """
     print("\n-------------- Starting scraping process --------------")
     print("1. INITIALIZATION (WAYF)")
+    
+    # Récupération de l'email depuis l'environnement
+    email = os.getenv("EMAIL")
+    if not email:
+        print("[ERROR] Email non trouvé dans les variables d'environnement.")
+        return None
+
+    # Initialisation de la session en interne
+    session = initialiserSession()
     
     # Step 1: Initial GET request to WAYF service with email to obtain ADFS redirection.
     urlWayf = f"https://wayf.cesi.fr/login?client_name=ClientIdpViaCesiFr&needs_client_redirection=true&UserName={email}"
@@ -51,7 +62,7 @@ def authenticationSSO(session, email = os.getenv("EMAIL")):
         r2 = r1  # If no auto-submit, r2 is r1
 
     print("[SUCCESS] SAML auto-submission form completed")
-    return r2
+    return session, r2
 
 
 def authenticationADFS(session, r2, email, mdp):
@@ -123,6 +134,7 @@ def authenticationSAML(session, r3):
         print("[ERROR] Failed to connect to ENT. (Incorrect redirection)")
         return False
     
+
 
 def recupererDonnees(session, nombreDeJours, pathJson):
     dataJson = [] 
