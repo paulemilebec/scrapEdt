@@ -27,7 +27,7 @@ def execution():
         print(f"\n[LOG] Execution started: {datetime.datetime.now()}")
 
         # Step 1: Authentication
-        r2 = authenticationSSO(email)
+        r2 = authenticationSSO()
         if r2 is None: raise Exception("Failed at SSO/WAYF step")
 
         r3 = authenticationADFS(r2, email, mdp)
