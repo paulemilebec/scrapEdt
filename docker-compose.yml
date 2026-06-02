@@ -23,10 +23,11 @@ services:
       - .env
     volumes:
       - ./server/ics:/app/ics
-      - ./server:/app
+      - ./server/jsonAPI:/app/jsonAPI
     restart: unless-stopped
     networks:
       - npm-network
+      - default
 
 networks:
   npm-network:
