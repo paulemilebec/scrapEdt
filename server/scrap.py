@@ -6,26 +6,27 @@ import requests
 import html
 import json
 import os
-import time  # Ajout pour le timestamp dynamique
-
-global session
-
+import time
 
 def authenticationSSO():
-    global session
     """
     SSO authentication via SAML protocol.
     Handles WAYF redirection and SAML form auto-submission.
     """
     session = requests.Session()
 
-    # Intégration du certificat local si présent (indispensable en environnement Docker épuré)
+    # Intégration du certificat local si présent
     cert_path = "/app/cesi-fr-chain.pem"
     if os.path.exists(cert_path):
         session.verify = cert_path
         print("[INFO] Certificat SSL CESI chargé avec succès.")
     else:
         session.verify = True
+
+    # Ajout d'un User-Agent standard pour éviter d'être catégorisé comme robot brut
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    })
 
     print("\n-------------- Starting scraping process --------------")
     print("1. INITIALIZATION (WAYF)")
@@ -49,11 +50,10 @@ def authenticationSSO():
         r2 = r1
 
     print("[SUCCESS] SAML auto-submission form completed")
-    return r2
+    return session, r2
 
 
-def authenticationADFS(r2, email, mdp):
-    global session
+def authenticationADFS(session, r2, email, mdp):
     print("\n2. ADFS AUTHENTICATION (Login/Password)")
     
     soupAdfs = BeautifulSoup(r2.text, "html.parser")
@@ -84,8 +84,7 @@ def authenticationADFS(r2, email, mdp):
     return r3
 
 
-def authenticationSAML(r3):
-    global session
+def authenticationSAML(session, r3):
     print("\n3. SAML FEDERATION (Token Transfer)")
     
     soupSaml = BeautifulSoup(r3.text, "html.parser")
@@ -99,25 +98,30 @@ def authenticationSAML(r3):
     samlData = {i.get("name"): i.get("value", "") 
                  for i in samlForm.find_all("input") if i.get("name")}
 
+    # --- CORRECTION 1 : Suivre agressivement les redirections de l'échange de jetons ---
     r4 = session.post(actionSaml, data=samlData, allow_redirects=True)
     if r4.status_code != 200:
         print("[ERROR] Final SAML submission failed.")
         return None
     print(f"[SUCCESS] SAML POST successful -> Final URL: {r4.url}")
 
+    # Si la redirection nous laisse sur le WAYF, on force le retour vers l'ENT racine pour valider la session
+    if "wayf.cesi.fr" in r4.url:
+        print("[INFO] Redirection manuelle vers l'ENT pour forcer l'écriture des cookies applicatifs...")
+        r4 = session.get("https://ent.cesi.fr/", allow_redirects=True)
+
     entUrl = "https://ent.cesi.fr/mon-emploi-du-temps"
-    r5 = session.get(entUrl)
+    r5 = session.get(entUrl, allow_redirects=True)
 
     if "mon-emploi-du-temps" in r5.url or r5.status_code == 200:
         print("[SUCCESS] Connected to ENT successfully.")
-        return r5  # CORRECTION HISTORIQUE : Retourne la réponse pour valider l'étape dans main.py
+        return r5
     else:
         print("[ERROR] Failed to connect to ENT. (Incorrect redirection)")
         return None
     
 
-def recupererDonnees(nombreDeJours, pathJson):
-    global session
+def recupererDonnees(session, nombreDeJours, pathJson):
     dataJson = [] 
     
     entreprise_template = {
@@ -131,24 +135,22 @@ def recupererDonnees(nombreDeJours, pathJson):
         "participants": [{"libelleGroupe": "FISA INFO 25 28 Rouen"}]
     }
 
-    # Simulation d'un premier accès à la page pour initialiser le contexte de session Kportal
-    try:
-        session.get("https://ent.cesi.fr/mon-emploi-du-temps", timeout=10)
-    except Exception:
-        pass
-
     for i in range(nombreDeJours):
         dateObjet = date.today() + timedelta(days=i)
         dateCible = dateObjet.strftime("%Y-%m-%d")
         estWeekEnd = dateObjet.weekday() >= 5
         
-        # CORRECTION : Remplacement du timestamp figé par un timestamp généré à la volée (time.time())
         timestamp_actuel = int(time.time() * 1000)
         apiUrl = f"https://ent.cesi.fr/api/seance/all?start={dateCible}&end={dateCible}&codePersonne=2660723&_={timestamp_actuel}"
+        print(f"[INFO] API URL : {apiUrl}")
 
         try:
-            # Envoi d'en-têtes légers pour valider la nature asynchrone de la requête
-            headers_api = {"X-Requested-With": "XMLHttpRequest"}
+            # --- CORRECTION 2 : Ajout du Referer et de l'origine (anti-CSRF/403 de Kportal) ---
+            headers_api = {
+                "X-Requested-With": "XMLHttpRequest",
+                "Referer": "https://ent.cesi.fr/mon-emploi-du-temps",
+                "Accept": "application/json, text/javascript, */*; q=0.01"
+            }
             response = session.get(apiUrl, headers=headers_api, timeout=10)
             response.raise_for_status() 
             
