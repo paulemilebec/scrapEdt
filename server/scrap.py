@@ -113,17 +113,18 @@ def authenticationSAML(session, r3):
     entUrl = "https://ent.cesi.fr/mon-emploi-du-temps"
     r5 = session.get(entUrl, allow_redirects=True)
 
-    if "mon-emploi-du-temps" in r5.url or r5.status_code == 200:
+    if "mon-emploi-du-temps" in r5.url:
         print("[SUCCESS] Connected to ENT successfully.")
         return r5
     else:
-        print("[ERROR] Failed to connect to ENT. (Incorrect redirection)")
+        print(f"[ERROR] Failed to connect to ENT. (Incorrect redirection -> {r5.url})")
         return None
     
 
 def recupererDonnees(session, nombreDeJours, pathJson):
-    dataJson = [] 
-    
+    dataJson = []
+    joursEnErreur = 0
+
     entreprise_template = {
         "title": "Période en entreprise",
         "allDay": True,
@@ -179,7 +180,13 @@ def recupererDonnees(session, nombreDeJours, pathJson):
 
         except requests.exceptions.RequestException as e:
             print(f"[ERROR] Impossible de vérifier le jour {dateCible} (Erreur réseau) : {e}")
-            continue 
+            joursEnErreur += 1
+            continue
+
+    # Aucun jour récupéré : on n'écrit rien pour ne pas évincer les bons fichiers (7 conservés)
+    if joursEnErreur == nombreDeJours:
+        print("[ERROR] Aucun jour récupéré depuis l'API, fichier JSON non enregistré.")
+        return None
 
     timestamp = datetime.now().strftime("%d-%m-%Y_%Hh%M")
     nomFichierFinal = os.path.join(pathJson, f"{timestamp}.json")

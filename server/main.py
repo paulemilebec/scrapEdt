@@ -16,7 +16,7 @@ def execution():
         load_dotenv()
         email = os.getenv("EMAIL")
         mdp = os.getenv("MDP")
-        nombreDeJours = 3 
+        nombreDeJours = 30
         
         pathIcs = "/app/ics"
         pathJson = "/app/jsonAPI"
